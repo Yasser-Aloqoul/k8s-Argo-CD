@@ -1,0 +1,85 @@
+# Department, Organization and Admin may call Employee.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-employee-ingress
+  namespace: microservices
+
+spec:
+  podSelector:
+    matchLabels:
+      app: employee
+
+  policyTypes:
+    - Ingress
+
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - department
+                  - organization
+                  - admin
+
+      ports:
+        - protocol: TCP
+          port: 8080
+
+---
+# Organization and Admin may call Department.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-department-ingress
+  namespace: microservices
+
+spec:
+  podSelector:
+    matchLabels:
+      app: department
+
+  policyTypes:
+    - Ingress
+
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - organization
+                  - admin
+
+      ports:
+        - protocol: TCP
+          port: 8080
+
+---
+# Only Admin may call Organization internally.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-organization-ingress
+  namespace: microservices
+
+spec:
+  podSelector:
+    matchLabels:
+      app: organization
+
+  policyTypes:
+    - Ingress
+
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: admin
+
+      ports:
+        - protocol: TCP
+          port: 8080

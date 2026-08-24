@@ -1,0 +1,82 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: microservices-api
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api-ingress
+  annotations:
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.apiHost }}
+      secretName: {{ .Values.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.apiHost }}
+      http:
+        paths:
+          - path: /employees(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: employee
+                port:
+                  number: {{ .Values.spring.services.employee.port }}
+          - path: /departments(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: department
+                port:
+                  number: {{ .Values.spring.services.department.port }}
+          - path: /organizations(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: organization
+                port:
+                  number: {{ .Values.spring.services.organization.port }}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: microservices-admin
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: admin-ingress
+  annotations:
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.adminHost }}
+      secretName: {{ .Values.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.adminHost }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: admin
+                port:
+                  number: {{ .Values.spring.services.admin.port }}
+{{- end }}

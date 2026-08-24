@@ -1,0 +1,53 @@
+spring:
+  resources:
+    requests:
+      cpu: 250m
+      memory: 768Mi
+    limits:
+      cpu: "1"
+      memory: 1536Mi
+
+  services:
+    admin:
+      replicaCount: 2
+      image:
+        tag: "1.1"
+
+    employee:
+      replicaCount: 3
+      image:
+        tag: "1.2"
+
+    department:
+      replicaCount: 3
+      image:
+        tag: "1.2"
+
+    organization:
+      replicaCount: 3
+      image:
+        tag: "1.2"
+
+mongodb:
+  replicaCount: 1
+
+  auth:
+    password: ""
+    existingSecret: mongodb-production
+
+  persistence:
+    size: 10Gi
+
+ingress:
+  apiHost: api.example.com
+  adminHost: admin.example.com
+
+  tls:
+    enabled: true
+    secretName: microservices-production-tls
+
+networkPolicies:
+  kubernetesApi:
+    # Example only: replace with the real production API endpoint.
+    cidr: 192.0.2.10/32
+    port: 443

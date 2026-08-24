@@ -1,0 +1,77 @@
+{{- if .Values.mongodb.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+    app: mongodb
+    app.kubernetes.io/component: mongodb
+spec:
+  serviceName: mongodb-headless
+  replicas: {{ .Values.mongodb.replicaCount }}
+  selector:
+    matchLabels:
+      app: mongodb
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: mongodb
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/name: {{ include "microservices-stack.name" . }}
+        app.kubernetes.io/component: mongodb
+      annotations:
+        checksum/config: {{ printf "%s" .Values.mongodb.auth.database | sha256sum }}
+        checksum/auth: {{ printf "%s:%s:%s" .Values.mongodb.auth.username .Values.mongodb.auth.password .Values.mongodb.auth.existingSecret | sha256sum }}
+    spec:
+      containers:
+        - name: mongodb
+          image: "{{ .Values.mongodb.image.repository }}:{{ .Values.mongodb.image.tag }}"
+          imagePullPolicy: {{ .Values.mongodb.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.mongodb.resources | nindent 12 }}
+          ports:
+            - name: mongodb
+              containerPort: {{ .Values.mongodb.port }}
+              protocol: TCP
+          env:
+            - name: MONGO_INITDB_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: mongodb
+                  key: database-name
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "microservices-stack.mongodbSecretName" . }}
+                  key: database-user
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "microservices-stack.mongodbSecretName" . }}
+                  key: database-password
+          volumeMounts:
+            - name: mongodb-data
+              mountPath: /data/db
+  {{- if .Values.mongodb.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: mongodb-data
+        labels:
+          {{- include "microservices-stack.labels" . | nindent 10 }}
+          app.kubernetes.io/component: mongodb
+      spec:
+        storageClassName: {{ .Values.mongodb.persistence.storageClass }}
+        accessModes:
+          - {{ .Values.mongodb.persistence.accessMode }}
+        resources:
+          requests:
+            storage: {{ .Values.mongodb.persistence.size }}
+  {{- else }}
+      volumes:
+        - name: mongodb-data
+          emptyDir: {}
+  {{- end }}
+{{- end }}

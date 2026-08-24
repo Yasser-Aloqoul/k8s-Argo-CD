@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mongodb-allow-backends
+  namespace: microservices
+
+spec:
+  # This policy protects Pods labeled app=mongodb.
+  podSelector:
+    matchLabels:
+      app: mongodb
+
+  # We are restricting traffic entering MongoDB.
+  policyTypes:
+    - Ingress
+
+  ingress:
+    # Allow one group of authorized source Pods.
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - employee
+                  - department
+                  - organization
+
+      # Authorized Pods may connect only to MongoDB's TCP port.
+      ports:
+        - protocol: TCP
+          port: 27017

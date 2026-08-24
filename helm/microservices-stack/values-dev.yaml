@@ -1,0 +1,45 @@
+spring:
+  services:
+    admin:
+      replicaCount: 1
+      image:
+        tag: local
+
+    employee:
+      replicaCount: 1
+      image:
+        tag: local
+
+    department:
+      replicaCount: 1
+      image:
+        tag: local
+
+    organization:
+      replicaCount: 1
+      image:
+        tag: local
+
+mongodb:
+  replicaCount: 1
+
+  auth:
+    username: root
+    password: dev-only-change-me
+    existingSecret: ""
+
+  persistence:
+    size: 2Gi
+
+ingress:
+  apiHost: helm-api.microservices.test
+  adminHost: helm-admin.microservices.test
+
+  tls:
+    enabled: true
+    secretName: microservices-local-tls
+
+networkPolicies:
+  kubernetesApi:
+    cidr: 192.168.58.2/32
+    port: 8443

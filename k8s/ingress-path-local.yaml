@@ -1,0 +1,73 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: microservices-api
+  namespace: microservices
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+
+spec:
+  ingressClassName: nginx
+
+  tls:
+    - hosts:
+        - api.microservices.test
+      secretName: microservices-local-tls
+
+  rules:
+    - host: api.microservices.test
+      http:
+        paths:
+          - path: /employees(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: employee
+                port:
+                  number: 8080
+
+          - path: /departments(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: department
+                port:
+                  number: 8080
+
+          - path: /organizations(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: organization
+                port:
+                  number: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: microservices-admin
+  namespace: microservices
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+
+spec:
+  ingressClassName: nginx
+
+  tls:
+    - hosts:
+        - admin.microservices.test
+      secretName: microservices-local-tls
+
+  rules:
+    - host: admin.microservices.test
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: admin
+                port:
+                  number: 8080

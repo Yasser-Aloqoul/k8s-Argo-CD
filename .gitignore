@@ -168,3 +168,18 @@
 /organization-service/organization-service.iml
 /.idea/sample-spring-microservices-kubernetes.iml
 /.idea/vcs.xml
+
+# Build output
+**/target/
+
+# Local IDE settings
+.vscode/
+
+# Local logs and operating-system files
+*.log
+logs.txt
+.DS_Store
+
+# Locally generated TLS material
+*.crt
+*.key

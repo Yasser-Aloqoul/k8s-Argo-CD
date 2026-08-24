@@ -1,0 +1,147 @@
+# Optional overrides for Helm-generated names.
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: spring-cloud-kubernetes
+
+rbac:
+  create: true
+
+spring:
+  imagePullPolicy: IfNotPresent
+
+  javaToolOptions: >-
+    -XX:InitialRAMPercentage=25.0
+    -XX:MaxRAMPercentage=60.0
+    -XX:+ExitOnOutOfMemoryError
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+  probes:
+    startup:
+      path: /actuator/health/liveness
+      periodSeconds: 5
+      timeoutSeconds: 2
+      failureThreshold: 36
+
+    readiness:
+      path: /actuator/health/readiness
+      periodSeconds: 5
+      timeoutSeconds: 2
+      failureThreshold: 3
+
+    liveness:
+      path: /actuator/health/liveness
+      periodSeconds: 10
+      timeoutSeconds: 2
+      failureThreshold: 3
+
+  services:
+    admin:
+      enabled: true
+      replicaCount: 1
+      image:
+        repository: piomin/admin
+        tag: local
+      port: 8080
+
+    employee:
+      enabled: true
+      replicaCount: 1
+      image:
+        repository: piomin/employee
+        tag: local
+      port: 8080
+
+    department:
+      enabled: true
+      replicaCount: 1
+      image:
+        repository: piomin/department
+        tag: local
+      port: 8080
+
+    organization:
+      enabled: true
+      replicaCount: 1
+      image:
+        repository: piomin/organization
+        tag: local
+      port: 8080
+
+mongodb:
+  enabled: true
+  replicaCount: 1
+
+  image:
+    repository: mongo
+    tag: "8.2"
+    pullPolicy: IfNotPresent
+
+  port: 27017
+
+  auth:
+    database: admin
+    username: root
+
+    # Used only for local learning when existingSecret is empty.
+    password: ""
+
+    # Production should normally provide an existing Secret.
+    existingSecret: ""
+
+    # Name used if the Chart creates the Secret.
+    secretName: mongodb
+
+  persistence:
+    enabled: true
+    storageClass: standard
+    accessMode: ReadWriteOnce
+    size: 2Gi
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+ingress:
+  enabled: true
+  className: nginx
+
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+
+  apiHost: api.example.invalid
+  adminHost: admin.example.invalid
+
+  tls:
+    enabled: true
+    secretName: microservices-local-tls
+
+networkPolicies:
+  enabled: true
+
+  dns:
+    namespace: kube-system
+    podLabelKey: k8s-app
+    podLabelValue: kube-dns
+    port: 53
+
+  ingressController:
+    namespace: ingress-nginx
+
+  kubernetesApi:
+    # This is cluster-specific and will be supplied by values-dev.yaml.
+    cidr: ""
+    port: 8443

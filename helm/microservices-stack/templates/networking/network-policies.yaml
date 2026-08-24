@@ -1,0 +1,334 @@
+{{- if .Values.networkPolicies.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-egress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicies.dns.namespace }}
+          podSelector:
+            matchLabels:
+              {{ .Values.networkPolicies.dns.podLabelKey }}: {{ .Values.networkPolicies.dns.podLabelValue | quote }}
+      ports:
+        - protocol: UDP
+          port: {{ .Values.networkPolicies.dns.port }}
+        - protocol: TCP
+          port: {{ .Values.networkPolicies.dns.port }}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-kubernetes-api-egress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - admin
+          - employee
+          - department
+          - organization
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: {{ required "networkPolicies.kubernetesApi.cidr is required" .Values.networkPolicies.kubernetesApi.cidr }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.networkPolicies.kubernetesApi.port }}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mongodb-allow-backends
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: mongodb
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - employee
+                  - department
+                  - organization
+      ports:
+        - protocol: TCP
+          port: {{ .Values.mongodb.port }}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-employee-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: employee
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - department
+                  - organization
+                  - admin
+      ports:
+        - protocol: TCP
+          port: {{ .Values.spring.services.employee.port }}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-department-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: department
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - organization
+                  - admin
+      ports:
+        - protocol: TCP
+          port: {{ .Values.spring.services.department.port }}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-organization-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: organization
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: admin
+      ports:
+        - protocol: TCP
+          port: {{ .Values.spring.services.organization.port }}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-nginx
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - admin
+          - employee
+          - department
+          - organization
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicies.ingressController.namespace }}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+              app.kubernetes.io/component: controller
+      ports:
+        - protocol: TCP
+          port: 8080
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-employee-egress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: employee
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: mongodb
+      ports:
+        - protocol: TCP
+          port: {{ .Values.mongodb.port }}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-department-egress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: department
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: mongodb
+      ports:
+        - protocol: TCP
+          port: {{ .Values.mongodb.port }}
+    - to:
+        - podSelector:
+            matchLabels:
+              app: employee
+      ports:
+        - protocol: TCP
+          port: {{ .Values.spring.services.employee.port }}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-organization-egress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: organization
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: mongodb
+      ports:
+        - protocol: TCP
+          port: {{ .Values.mongodb.port }}
+    - to:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - employee
+                  - department
+      ports:
+        - protocol: TCP
+          port: 8080
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-admin-egress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: admin
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - employee
+                  - department
+                  - organization
+      ports:
+        - protocol: TCP
+          port: 8080
+{{- end }}

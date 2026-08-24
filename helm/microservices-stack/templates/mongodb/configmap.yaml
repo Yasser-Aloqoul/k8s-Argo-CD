@@ -1,0 +1,12 @@
+{{- if .Values.mongodb.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongodb
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mongodb
+data:
+  database-name: {{ .Values.mongodb.auth.database | quote }}
+{{- end }}

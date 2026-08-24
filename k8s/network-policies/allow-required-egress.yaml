@@ -1,0 +1,190 @@
+# All Pods need DNS resolution.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: microservices
+
+spec:
+  podSelector: {}
+
+  policyTypes:
+    - Egress
+
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+---
+# Spring Cloud Kubernetes needs the Kubernetes API.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-kubernetes-api-egress
+  namespace: microservices
+
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - employee
+          - department
+          - organization
+          - admin
+
+  policyTypes:
+    - Egress
+
+  egress:
+    - to:
+        - ipBlock:
+            # Current minikube-calico API endpoint.
+            cidr: 192.168.58.2/32
+
+      ports:
+        - protocol: TCP
+          port: 8443
+
+---
+# Employee only needs MongoDB.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-employee-egress
+  namespace: microservices
+
+spec:
+  podSelector:
+    matchLabels:
+      app: employee
+
+  policyTypes:
+    - Egress
+
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: mongodb
+
+      ports:
+        - protocol: TCP
+          port: 27017
+
+---
+# Department needs MongoDB and Employee.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-department-egress
+  namespace: microservices
+
+spec:
+  podSelector:
+    matchLabels:
+      app: department
+
+  policyTypes:
+    - Egress
+
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: mongodb
+
+      ports:
+        - protocol: TCP
+          port: 27017
+
+    - to:
+        - podSelector:
+            matchLabels:
+              app: employee
+
+      ports:
+        - protocol: TCP
+          port: 8080
+
+---
+# Organization needs MongoDB, Employee and Department.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-organization-egress
+  namespace: microservices
+
+spec:
+  podSelector:
+    matchLabels:
+      app: organization
+
+  policyTypes:
+    - Egress
+
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: mongodb
+
+      ports:
+        - protocol: TCP
+          port: 27017
+
+    - to:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - employee
+                  - department
+
+      ports:
+        - protocol: TCP
+          port: 8080
+
+---
+# Admin monitors all three Spring services.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-admin-egress
+  namespace: microservices
+
+spec:
+  podSelector:
+    matchLabels:
+      app: admin
+
+  policyTypes:
+    - Egress
+
+  egress:
+    - to:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - employee
+                  - department
+                  - organization
+
+      ports:
+        - protocol: TCP
+          port: 8080

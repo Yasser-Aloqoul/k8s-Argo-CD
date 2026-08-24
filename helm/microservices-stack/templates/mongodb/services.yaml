@@ -1,0 +1,42 @@
+{{- if .Values.mongodb.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+    app: mongodb
+    app.kubernetes.io/component: mongodb
+spec:
+  type: ClusterIP
+  selector:
+    app: mongodb
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - name: mongodb
+      port: {{ .Values.mongodb.port }}
+      targetPort: mongodb
+      protocol: TCP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-headless
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "microservices-stack.labels" . | nindent 4 }}
+    app: mongodb
+    app.kubernetes.io/component: mongodb
+spec:
+  clusterIP: None
+  selector:
+    app: mongodb
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - name: mongodb
+      port: {{ .Values.mongodb.port }}
+      targetPort: mongodb
+      protocol: TCP
+{{- end }}

@@ -14,9 +14,51 @@ spec:
       serviceAccountName: spring-cloud-kubernetes
       containers:
       - name: admin
-        image: piomin/admin
+        image: piomin/admin:local
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
         ports:
         - containerPort: 8080
+        startupProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+            scheme: HTTP
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 36
+          successThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+            scheme: HTTP
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 3
+          successThreshold: 1
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+            scheme: HTTP
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+          successThreshold: 1
         env:
-          - name: SPRING_CLOUD_BOOTSTRAP_ENABLED
-            value: "true"
+          - name: SPRING_APPLICATION_NAME
+            value: "admin"
+          - name: SPRING_CONFIG_IMPORT
+            value: "kubernetes:"
+          - name: JAVA_TOOL_OPTIONS
+            value: >-
+              -XX:InitialRAMPercentage=25.0
+              -XX:MaxRAMPercentage=60.0
+              -XX:+ExitOnOutOfMemoryError

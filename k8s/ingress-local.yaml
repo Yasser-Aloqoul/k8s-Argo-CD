@@ -1,0 +1,51 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: microservices-ingress
+  namespace: microservices
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: employee.microservices.test
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: employee
+                port:
+                  number: 8080
+
+    - host: department.microservices.test
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: department
+                port:
+                  number: 8080
+
+    - host: organization.microservices.test
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: organization
+                port:
+                  number: 8080
+
+    - host: admin.microservices.test
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: admin
+                port:
+                  number: 8080

@@ -1,4 +1,4 @@
-FROM openjdk:25-alpine
+FROM eclipse-temurin:25-jre-alpine
 ENV APP_FILE employee-service-1.2.jar
 ENV APP_HOME /usr/apps
 EXPOSE 8080

@@ -1,0 +1,10 @@
+Microservices stack installed successfully.
+
+Release: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+
+API: {{ if .Values.ingress.tls.enabled }}https{{ else }}http{{ end }}://{{ .Values.ingress.apiHost }}
+Admin: {{ if .Values.ingress.tls.enabled }}https{{ else }}http{{ end }}://{{ .Values.ingress.adminHost }}
+
+Check the workloads with:
+  kubectl get pods -n {{ .Release.Namespace }}
