@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: microservices-dev
+  namespace: argocd
+
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/cloudvests-training/k8s-Argo-CD.git
+    targetRevision: master
+    path: helm/microservices-stack
+
+    helm:
+      releaseName: microservices-dev
+      valueFiles:
+        - values-dev.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: microservices-helm-dev
+
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
