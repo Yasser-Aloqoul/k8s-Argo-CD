@@ -9,7 +9,7 @@ spec:
   project: default
 
   source:
-    repoURL: git@github.com:Yasser-Aloqoul/k8s-Argo-CD.git
+    repoURL: https://github.com/Yasser-Aloqoul/k8s-Argo-CD.git
     targetRevision: master
     path: helm/microservices-stack
 
