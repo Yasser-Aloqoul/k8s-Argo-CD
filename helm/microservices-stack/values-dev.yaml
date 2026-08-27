@@ -6,7 +6,7 @@ spring:
         tag: local
 
     employee:
-      replicaCount: 2
+      replicaCount: 1
       image:
         tag: local
 
