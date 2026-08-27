@@ -1,0 +1,18 @@
+spring:
+  services:
+    admin:
+      enabled: false
+
+    employee:
+      enabled: true
+      replicaCount: 1
+
+    department:
+      enabled: false
+
+    organization:
+      enabled: false
+
+ingress:
+  enabled: false
+

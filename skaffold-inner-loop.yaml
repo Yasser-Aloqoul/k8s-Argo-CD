@@ -1,0 +1,34 @@
+apiVersion: skaffold/v4beta14
+kind: Config
+metadata:
+  name: employee-inner-loop
+
+build:
+  local:
+    push: false
+
+  artifacts:
+    - image: piomin/employee
+      context: .
+      jib:
+        project: employee-service
+        args:
+          - -DskipTests
+
+deploy:
+  helm:
+    releases:
+      - name: employee-inner-loop
+        chartPath: helm/microservices-stack
+        namespace: microservices-skaffold
+        createNamespace: true
+
+        valuesFiles:
+          - helm/microservices-stack/values-dev.yaml
+          - helm/microservices-stack/values-skaffold.yaml
+
+        setValueTemplates:
+          spring.services.employee.image.repository: "{{.IMAGE_REPO_piomin_employee}}"
+          spring.services.employee.image.tag: "{{.IMAGE_TAG_piomin_employee}}@{{.IMAGE_DIGEST_piomin_employee}}"
+
+        wait: true
