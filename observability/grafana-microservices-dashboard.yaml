@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: microservices-observability-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  microservices-observability.json: |-
+    {
+      "title": "Microservices / Spring Boot",
+      "uid": "microservices-spring-boot",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "time": {"from": "now-1h", "to": "now"},
+      "templating": {
+        "list": [
+          {
+            "name": "namespace",
+            "label": "Namespace",
+            "type": "query",
+            "datasource": {"type": "prometheus", "uid": "prometheus"},
+            "query": "label_values(kube_pod_info, namespace)",
+            "current": {"text": "microservices-helm-dev", "value": "microservices-helm-dev"}
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "Reachable Spring Services",
+          "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [{"expr": "count(max by (service) (up{namespace=\"$namespace\",service=~\"admin|employee|department|organization\"} == 1))", "refId": "A"}],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"], "values": false}}
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "Application Pods",
+          "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [{"expr": "count(kube_pod_info{namespace=\"$namespace\"})", "refId": "A"}],
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"], "values": false}}
+        },
+        {
+          "id": 3,
+          "type": "timeseries",
+          "title": "JVM memory used",
+          "gridPos": {"h": 10, "w": 12, "x": 0, "y": 8},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [{"expr": "sum by (service) (jvm_memory_used_bytes{namespace=\"$namespace\"})", "legendFormat": "{{service}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []}
+        },
+        {
+          "id": 4,
+          "type": "timeseries",
+          "title": "HTTP request rate",
+          "gridPos": {"h": 10, "w": 12, "x": 12, "y": 8},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [{"expr": "sum by (service) (rate(http_server_requests_seconds_count{namespace=\"$namespace\"}[5m]))", "legendFormat": "{{service}}", "refId": "A"}],
+          "fieldConfig": {"defaults": {"unit": "reqps"}, "overrides": []}
+        }
+      ]
+    }

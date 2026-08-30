@@ -1,0 +1,99 @@
+# We will learn alerting later. Save resources for now.
+alertmanager:
+  enabled: false
+
+# Disable default alert rules for this local learning cluster.
+defaultRules:
+  create: false
+
+grafana:
+  enabled: true
+
+  # We will provide these credentials through a Kubernetes Secret.
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+
+  # Default dashboards are useful for learning.
+  defaultDashboardsEnabled: true
+
+  # Grafana dashboards can be recreated in this learning cluster.
+  persistence:
+    enabled: false
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+prometheus:
+  enabled: true
+
+  prometheusSpec:
+    # Keep a small local metric history.
+    retention: 3d
+    retentionSize: 3GiB
+
+    # Prometheus discovers ServiceMonitors across namespaces.
+    serviceMonitorNamespaceSelector: {}
+
+    # Persist Prometheus time-series data.
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: standard
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 4Gi
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+# Minikube control-plane components are static Pods.
+# Disable these scrape jobs to avoid misleading "down" targets.
+kubeEtcd:
+  enabled: false
+
+kubeControllerManager:
+  enabled: false
+
+kubeScheduler:
+  enabled: false

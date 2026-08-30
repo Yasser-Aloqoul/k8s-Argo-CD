@@ -127,6 +127,10 @@ spec:
               value: "kubernetes:"
             - name: JAVA_TOOL_OPTIONS
               value: {{ $root.Values.spring.javaToolOptions | quote }}
+            {{- if $root.Values.observability.enabled }}
+            - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+              value: "health,prometheus"
+            {{- end }}
             {{- if ne $name "admin" }}
             - name: SPRING_MONGODB_USERNAME
               valueFrom:

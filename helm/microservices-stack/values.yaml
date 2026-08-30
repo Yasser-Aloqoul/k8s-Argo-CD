@@ -77,6 +77,13 @@ spring:
         tag: local
       port: 8080
 
+# Application-metrics scraping is opt-in. Enable it in an environment only
+# when that cluster has the Prometheus Operator and ServiceMonitor CRD.
+observability:
+  enabled: false
+  monitoringNamespace: monitoring
+  prometheusRelease: monitoring
+
 mongodb:
   enabled: true
   replicaCount: 1
