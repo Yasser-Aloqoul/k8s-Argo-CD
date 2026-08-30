@@ -21,7 +21,7 @@ spring:
         tag: local
 
 mongodb:
-  replicaCount: 1
+  replicaCount: 0
 
   auth:
     username: root
